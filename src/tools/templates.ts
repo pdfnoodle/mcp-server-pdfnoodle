@@ -7,9 +7,22 @@ export const listTemplates = {
   description: "Retrieve all available PDF templates from your PDFNoodle account",
   schema: z.object({}),
   handler: async (apiKey: string) => {
-    const { data } = await client.call<Template[]>(apiKey, "integration/templates");
+    const { data } = await client.call<Template[] | { templates?: Template[]; data?: Template[] }>(
+      apiKey,
+      "integration/templates"
+    );
 
-    if (!data || data.length === 0) {
+    // Handle wrapped responses: { templates: [...] } or { data: [...] }
+    let templates: Template[] = [];
+    if (Array.isArray(data)) {
+      templates = data;
+    } else if (data && typeof data === "object") {
+      templates = (data as { templates?: Template[]; data?: Template[] }).templates || 
+                  (data as { templates?: Template[]; data?: Template[] }).data || 
+                  [];
+    }
+
+    if (!templates || templates.length === 0) {
       return {
         content: [
           {
@@ -20,7 +33,7 @@ export const listTemplates = {
       };
     }
 
-    const templateList = data
+    const templateList = templates
       .map((t) => `- ${t.displayName} (ID: ${t.id})`)
       .join("\n");
 
@@ -28,7 +41,7 @@ export const listTemplates = {
       content: [
         {
           type: "text" as const,
-          text: `Found ${data.length} template(s):\n\n${templateList}\n\nUse 'get_template' with a template ID for details, or 'get_template_schema' to see required variables.`,
+          text: `Found ${templates.length} template(s):\n\n${templateList}\n\nUse 'get_template' with a template ID for details, or 'get_template_schema' to see required variables.`,
         },
       ],
     };

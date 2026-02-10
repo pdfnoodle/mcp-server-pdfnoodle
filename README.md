@@ -266,6 +266,13 @@ PDFNOODLE_API_KEY=your-key npm run dev
 
 MIT - see [LICENSE](LICENSE)
 
+## Changelog
+
+| Version | Date       | Changes                                                                    |
+| ------- | ---------- | --------------------------------------------------------------------------- |
+| 1.0.1   | 2026-02-10 | **Bug Fix**: Fixed `list_templates` to handle wrapped API responses (`{ templates: [...] }` or `{ data: [...] }`). |
+| 1.0.0   | 2026-02-10 | Initial release with support for template operations and PDF generation.     |
+
 ## Links
 
 - [pdf noodle](https://pdfnoodle.com) - PDF generation platform

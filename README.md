@@ -270,6 +270,7 @@ MIT - see [LICENSE](LICENSE)
 
 | Version | Date       | Changes                                                                    |
 | ------- | ---------- | --------------------------------------------------------------------------- |
+| 1.0.2   | 2026-02-10 | **Bug Fix**: Fixed `get_template` to correctly handle API response format and return all template fields (id, displayName, createdAt, updatedAt, type, style, html). |
 | 1.0.1   | 2026-02-10 | **Bug Fix**: Fixed `list_templates` to handle wrapped API responses (`{ templates: [...] }` or `{ data: [...] }`). |
 | 1.0.0   | 2026-02-10 | Initial release with support for template operations and PDF generation.     |
 

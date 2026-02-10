@@ -55,38 +55,57 @@ export const getTemplate = {
     templateId: z.string().describe("The unique ID of the template to retrieve"),
   }),
   handler: async (apiKey: string, args: { templateId: string }) => {
-    const { data } = await client.call<TemplateDetail>(
-      apiKey,
-      `integration/templates/${args.templateId}`
-    );
+    const { data } = await client.call<
+      TemplateDetail | { template?: TemplateDetail; status?: string; displayName?: string }
+    >(apiKey, `integration/templates/${args.templateId}`);
 
-    if (data.status === "COMPLETED") {
+    // Completed template: API returns { template: {...} }
+    if ((data as { template?: TemplateDetail }).template) {
+      const template = (data as { template: TemplateDetail }).template;
+      
+      const details: string[] = [
+        `ID: ${template.id}`,
+        `Display Name: ${template.displayName}`,
+      ];
+      
+      if (template.createdAt) details.push(`Created At: ${template.createdAt}`);
+      if (template.updatedAt) details.push(`Updated At: ${template.updatedAt}`);
+      if (template.type) details.push(`Type: ${template.type}`);
+      if (template.style) details.push(`Style: ${template.style}`);
+      if (template.html) details.push(`\nHTML:\n${template.html}`);
+      
       return {
         content: [
           {
             type: "text" as const,
-            text: `Template: ${data.displayName}\nID: ${data.id}\nStatus: Ready\n\nUse 'get_template_schema' to see the variables required to generate a PDF.`,
+            text: `Template Details:\n\n${details.join('\n')}\n\nStatus: Ready\n\nUse 'get_template_schema' to see the variables required to generate a PDF.`,
           },
         ],
       };
     }
 
-    if (data.status === "ONGOING") {
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: `Template "${data.displayName}" is still being created. Please check again in a moment.`,
-          },
-        ],
-      };
+    // Still being created: API returns Redis payload with status field
+    if ((data as { status?: string }).status) {
+      const status = (data as { status: string; displayName?: string }).status;
+      const displayName = (data as { displayName?: string }).displayName || "Template";
+      
+      if (status === "ONGOING" || status === "PENDING") {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Template "${displayName}" is still being created. Please check again in a moment.`,
+            },
+          ],
+        };
+      }
     }
 
     return {
       content: [
         {
           type: "text" as const,
-          text: `Template creation failed. Please try creating a new template.`,
+          text: `Template not found or creation failed. Please try again or create a new template.`,
         },
       ],
       isError: true,

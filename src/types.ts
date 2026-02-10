@@ -30,6 +30,12 @@ export interface Template {
 }
 
 export interface TemplateDetail extends Template {
+  id: string;
+  displayName: string;
+  createdAt?: string;
+  updatedAt?: string;
+  type?: string;
+  style?: string;
   html?: string;
   css?: string;
   schema?: Record<string, unknown>;

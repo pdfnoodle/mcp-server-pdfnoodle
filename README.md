@@ -270,6 +270,7 @@ MIT - see [LICENSE](LICENSE)
 
 | Version | Date       | Changes                                                                    |
 | ------- | ---------- | --------------------------------------------------------------------------- |
+| 1.0.3   | 2026-02-18 | **Feature**: Async mode for PDF generation — when `async: true` is set, tools call the `/async` endpoint and return a `requestId` immediately to avoid MCP client timeouts on large PDFs. When the sync endpoint returns 202, tools return the requestId for LLM polling. Updated `check_pdf_status` to instruct re-polling in 5–10 seconds. |
 | 1.0.2   | 2026-02-10 | **Bug Fix**: Fixed `get_template` to correctly handle API response format and return all template fields (id, displayName, createdAt, updatedAt, type, style, html). |
 | 1.0.1   | 2026-02-10 | **Bug Fix**: Fixed `list_templates` to handle wrapped API responses (`{ templates: [...] }` or `{ data: [...] }`). |
 | 1.0.0   | 2026-02-10 | Initial release with support for template operations and PDF generation.     |

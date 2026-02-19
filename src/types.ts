@@ -47,6 +47,39 @@ export interface TemplateCreationResponse {
   status: string;
 }
 
+export interface ToolSuccessResponse {
+  url: string;
+  fileName: string;
+  urlValidUntil: string;
+}
+
+export interface UploadUrlResponse {
+  presignedUploadUrl: string;
+  presignedGetUrl: string;
+  status: string;
+  fileName: string;
+  uploadUrlValidUntil: string;
+  getUrlValidUntil: string;
+}
+
+export interface CompressPdfResponse extends ToolSuccessResponse {
+  metadata?: {
+    executionTime: string;
+    fileSize: string;
+    originalSize: string;
+    compressedSize: string;
+    reduction: string;
+  };
+}
+
+export interface SplitPdfResponse {
+  files: Array<{
+    url: string;
+    fileName: string;
+    urlValidUntil: string;
+  }>;
+}
+
 export interface ApiResponse<T> {
   status: number;
   data: T;

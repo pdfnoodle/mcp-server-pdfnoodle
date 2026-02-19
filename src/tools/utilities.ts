@@ -5,12 +5,14 @@ import type {
   UploadUrlResponse,
   CompressPdfResponse,
   SplitPdfResponse,
+  PdfQueuedResponse,
+  PdfStatusResponse,
 } from "../types.js";
 
 export const mergePdfs = {
   name: "merge_pdfs",
   description:
-    "Merge multiple PDF documents into a single PDF file. Provide at least 2 PDF URLs to combine them in the order specified.",
+    "Merge multiple PDF documents into a single PDF file. Provide at least 2 PDF URLs to combine them in the order specified. For large files, set async: true to get a requestId immediately, then poll with check_tool_status.",
   schema: z.object({
     urls: z
       .array(z.string())
@@ -27,6 +29,12 @@ export const mergePdfs = {
       .describe(
         "Signed URL expiration time in seconds (60-604800). Default: 3600"
       ),
+    async: z
+      .boolean()
+      .optional()
+      .describe(
+        "If true, returns a requestId immediately instead of waiting for completion. Use check_tool_status to poll for results. Recommended for large files."
+      ),
   }),
   handler: async (
     apiKey: string,
@@ -34,6 +42,7 @@ export const mergePdfs = {
       urls: string[];
       finalFilename?: string;
       expiration?: number;
+      async?: boolean;
     }
   ) => {
     const body: Record<string, unknown> = {
@@ -42,14 +51,28 @@ export const mergePdfs = {
 
     if (args.finalFilename) body.finalFilename = args.finalFilename;
     if (args.expiration) body.expiration = args.expiration;
+    if (args.async) body.async = true;
 
-    const { data } = await client.call<ToolSuccessResponse>(
+    const response = await client.call<ToolSuccessResponse | PdfQueuedResponse>(
       apiKey,
       "tools/merge-pdfs",
       "POST",
       body
     );
 
+    if (response.status === 202 || args.async) {
+      const queuedData = response.data as PdfQueuedResponse;
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `PDF merge queued.\n\nRequest ID: ${queuedData.requestId}\n\nUse check_tool_status with this requestId to check when the result is ready.`,
+          },
+        ],
+      };
+    }
+
+    const data = response.data as ToolSuccessResponse;
     return {
       content: [
         {
@@ -64,7 +87,7 @@ export const mergePdfs = {
 export const splitPdf = {
   name: "split_pdf",
   description:
-    "Split a PDF document into multiple parts. You can split by page ranges (e.g., '1-3,4-6') or by fixed intervals (e.g., every 2 pages).",
+    "Split a PDF document into multiple parts. You can split by page ranges (e.g., '1-3,4-6') or by fixed intervals (e.g., every 2 pages). For large files, set async: true to get a requestId immediately, then poll with check_tool_status.",
   schema: z.object({
     url: z.string().describe("URL of the PDF to split"),
     splitMode: z
@@ -95,6 +118,12 @@ export const splitPdf = {
       .describe(
         "Signed URL expiration time in seconds (60-604800). Default: 3600"
       ),
+    async: z
+      .boolean()
+      .optional()
+      .describe(
+        "If true, returns a requestId immediately instead of waiting for completion. Use check_tool_status to poll for results. Recommended for large files."
+      ),
   }),
   handler: async (
     apiKey: string,
@@ -105,6 +134,7 @@ export const splitPdf = {
       interval?: number;
       finalFilename?: string;
       expiration?: number;
+      async?: boolean;
     }
   ) => {
     const body: Record<string, unknown> = {
@@ -116,14 +146,28 @@ export const splitPdf = {
     if (args.interval !== undefined) body.interval = args.interval;
     if (args.finalFilename) body.finalFilename = args.finalFilename;
     if (args.expiration) body.expiration = args.expiration;
+    if (args.async) body.async = true;
 
-    const { data } = await client.call<SplitPdfResponse>(
+    const response = await client.call<SplitPdfResponse | PdfQueuedResponse>(
       apiKey,
       "tools/split-pdf",
       "POST",
       body
     );
 
+    if (response.status === 202 || args.async) {
+      const queuedData = response.data as PdfQueuedResponse;
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `PDF split queued.\n\nRequest ID: ${queuedData.requestId}\n\nUse check_tool_status with this requestId to check when the result is ready.`,
+          },
+        ],
+      };
+    }
+
+    const data = response.data as SplitPdfResponse;
     if (data.files && Array.isArray(data.files)) {
       const fileList = data.files
         .map(
@@ -156,7 +200,7 @@ export const splitPdf = {
 export const compressPdf = {
   name: "compress_pdf",
   description:
-    "Compress a PDF file to reduce its size. Choose from low, medium, or high compression levels.",
+    "Compress a PDF file to reduce its size. Choose from low, medium, or high compression levels. For large files, set async: true to get a requestId immediately, then poll with check_tool_status.",
   schema: z.object({
     url: z.string().describe("URL of the PDF to compress"),
     compressLevel: z
@@ -175,6 +219,12 @@ export const compressPdf = {
       .describe(
         "Signed URL expiration time in seconds (60-604800). Default: 3600"
       ),
+    async: z
+      .boolean()
+      .optional()
+      .describe(
+        "If true, returns a requestId immediately instead of waiting for completion. Use check_tool_status to poll for results. Recommended for large files."
+      ),
   }),
   handler: async (
     apiKey: string,
@@ -183,6 +233,7 @@ export const compressPdf = {
       compressLevel?: string;
       finalFilename?: string;
       expiration?: number;
+      async?: boolean;
     }
   ) => {
     const body: Record<string, unknown> = {
@@ -192,14 +243,28 @@ export const compressPdf = {
     if (args.compressLevel) body.compressLevel = args.compressLevel;
     if (args.finalFilename) body.finalFilename = args.finalFilename;
     if (args.expiration) body.expiration = args.expiration;
+    if (args.async) body.async = true;
 
-    const { data } = await client.call<CompressPdfResponse>(
+    const response = await client.call<CompressPdfResponse | PdfQueuedResponse>(
       apiKey,
       "tools/compress-pdf",
       "POST",
       body
     );
 
+    if (response.status === 202 || args.async) {
+      const queuedData = response.data as PdfQueuedResponse;
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `PDF compression queued.\n\nRequest ID: ${queuedData.requestId}\n\nUse check_tool_status with this requestId to check when the result is ready.`,
+          },
+        ],
+      };
+    }
+
+    const data = response.data as CompressPdfResponse;
     let text = `PDF compressed successfully!\n\nDownload URL: ${data.url}\nFile name: ${data.fileName}\nURL valid until: ${data.urlValidUntil}`;
 
     if (data.metadata) {
@@ -220,7 +285,7 @@ export const compressPdf = {
 export const updatePdfMetadata = {
   name: "update_pdf_metadata",
   description:
-    "Update the metadata of a PDF document (title, author, subject, keywords, etc.).",
+    "Update the metadata of a PDF document (title, author, subject, keywords, etc.). For large files, set async: true to get a requestId immediately, then poll with check_tool_status.",
   schema: z.object({
     url: z.string().describe("URL of the PDF to update"),
     metadata: z
@@ -238,6 +303,12 @@ export const updatePdfMetadata = {
       .describe(
         "Signed URL expiration time in seconds (60-604800). Default: 3600"
       ),
+    async: z
+      .boolean()
+      .optional()
+      .describe(
+        "If true, returns a requestId immediately instead of waiting for completion. Use check_tool_status to poll for results. Recommended for large files."
+      ),
   }),
   handler: async (
     apiKey: string,
@@ -246,6 +317,7 @@ export const updatePdfMetadata = {
       metadata: string;
       finalFilename?: string;
       expiration?: number;
+      async?: boolean;
     }
   ) => {
     let parsedMetadata: Record<string, unknown>;
@@ -270,14 +342,28 @@ export const updatePdfMetadata = {
 
     if (args.finalFilename) body.finalFilename = args.finalFilename;
     if (args.expiration) body.expiration = args.expiration;
+    if (args.async) body.async = true;
 
-    const { data } = await client.call<ToolSuccessResponse>(
+    const response = await client.call<ToolSuccessResponse | PdfQueuedResponse>(
       apiKey,
       "tools/update-pdf-metadata",
       "POST",
       body
     );
 
+    if (response.status === 202 || args.async) {
+      const queuedData = response.data as PdfQueuedResponse;
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `PDF metadata update queued.\n\nRequest ID: ${queuedData.requestId}\n\nUse check_tool_status with this requestId to check when the result is ready.`,
+          },
+        ],
+      };
+    }
+
+    const data = response.data as ToolSuccessResponse;
     return {
       content: [
         {
@@ -292,7 +378,7 @@ export const updatePdfMetadata = {
 export const convertMarkdownToPdf = {
   name: "convert_markdown_to_pdf",
   description:
-    "Convert Markdown content to a PDF document. Supports custom CSS and PDF formatting options like page size, margins, and orientation.",
+    "Convert Markdown content to a PDF document. Supports custom CSS and PDF formatting options like page size, margins, and orientation. For large documents, set async: true to get a requestId immediately, then poll with check_tool_status.",
   schema: z.object({
     markdown: z
       .string()
@@ -317,6 +403,12 @@ export const convertMarkdownToPdf = {
       .describe(
         "Signed URL expiration time in seconds (60-604800). Default: 3600"
       ),
+    async: z
+      .boolean()
+      .optional()
+      .describe(
+        "If true, returns a requestId immediately instead of waiting for completion. Use check_tool_status to poll for results. Recommended for large documents."
+      ),
   }),
   handler: async (
     apiKey: string,
@@ -326,6 +418,7 @@ export const convertMarkdownToPdf = {
       pdfOptions?: string;
       finalFilename?: string;
       expiration?: number;
+      async?: boolean;
     }
   ) => {
     const body: Record<string, unknown> = {
@@ -352,14 +445,28 @@ export const convertMarkdownToPdf = {
 
     if (args.finalFilename) body.finalFilename = args.finalFilename;
     if (args.expiration) body.expiration = args.expiration;
+    if (args.async) body.async = true;
 
-    const { data } = await client.call<ToolSuccessResponse>(
+    const response = await client.call<ToolSuccessResponse | PdfQueuedResponse>(
       apiKey,
       "tools/convert-markdown-to-pdf",
       "POST",
       body
     );
 
+    if (response.status === 202 || args.async) {
+      const queuedData = response.data as PdfQueuedResponse;
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Markdown to PDF conversion queued.\n\nRequest ID: ${queuedData.requestId}\n\nUse check_tool_status with this requestId to check when the result is ready.`,
+          },
+        ],
+      };
+    }
+
+    const data = response.data as ToolSuccessResponse;
     return {
       content: [
         {
@@ -409,6 +516,59 @@ export const getUploadUrl = {
   },
 };
 
+export const checkToolStatus = {
+  name: "check_tool_status",
+  description:
+    "Check the status of an asynchronous tool request. Use this to poll for results after any utility tool (merge_pdfs, split_pdf, compress_pdf, update_pdf_metadata, convert_markdown_to_pdf) returns a requestId. If the status is ONGOING, call this tool again in 5-10 seconds.",
+  schema: z.object({
+    requestId: z
+      .string()
+      .describe("The request ID from a queued tool operation"),
+  }),
+  handler: async (apiKey: string, args: { requestId: string }) => {
+    const { data } = await client.call<PdfStatusResponse>(
+      apiKey,
+      `pdf/status/${args.requestId}`
+    );
+
+    if (data.renderStatus === "SUCCESS") {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Tool operation completed!\n\nDownload URL: ${data.signedUrl}${
+              data.metadata
+                ? `\n\nExecution time: ${data.metadata.executionTime}\nFile size: ${data.metadata.fileSize}`
+                : ""
+            }`,
+          },
+        ],
+      };
+    }
+
+    if (data.renderStatus === "ONGOING") {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Tool operation is still in progress. Request ID: ${args.requestId}\n\nCall check_tool_status again in 5-10 seconds to check for completion.`,
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: "Tool operation failed. Please try again or contact support.",
+        },
+      ],
+      isError: true,
+    };
+  },
+};
+
 export const utilityTools = [
   mergePdfs,
   splitPdf,
@@ -416,4 +576,5 @@ export const utilityTools = [
   updatePdfMetadata,
   convertMarkdownToPdf,
   getUploadUrl,
+  checkToolStatus,
 ];

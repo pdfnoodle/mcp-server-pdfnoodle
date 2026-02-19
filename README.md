@@ -161,6 +161,17 @@ You can integrate pdf noodle MCP server into your n8n workflows using HTTP Reque
 | `html_to_pdf`      | Convert HTML content to PDF              |
 | `check_pdf_status` | Check status of async PDF generation     |
 
+### PDF Utilities
+
+| Tool                       | Description                                              |
+| -------------------------- | -------------------------------------------------------- |
+| `merge_pdfs`               | Merge multiple PDF documents into a single file          |
+| `split_pdf`                | Split a PDF into parts by ranges or intervals            |
+| `compress_pdf`             | Compress a PDF to reduce file size                       |
+| `update_pdf_metadata`      | Update PDF metadata (title, author, subject, etc.)       |
+| `convert_markdown_to_pdf`  | Convert Markdown content to a PDF document               |
+| `get_upload_url`           | Generate a pre-signed URL for uploading a PDF            |
+
 ## PDF Best Practices
 
 **IMPORTANT:** Before using the `html_to_pdf` tool, AI agents should follow the [PDF Best Practices](https://github.com/pdfnoodle/pdf-best-practices) guidelines.
@@ -270,6 +281,7 @@ MIT - see [LICENSE](LICENSE)
 
 | Version | Date       | Changes                                                                    |
 | ------- | ---------- | --------------------------------------------------------------------------- |
+| 1.1.0   | 2026-02-19 | **Feature**: Added 6 new PDF utility tools — `merge_pdfs`, `split_pdf`, `compress_pdf`, `update_pdf_metadata`, `convert_markdown_to_pdf`, and `get_upload_url` for comprehensive PDF manipulation capabilities. |
 | 1.0.3   | 2026-02-18 | **Feature**: Async mode for PDF generation — when `async: true` is set, tools call the `/async` endpoint and return a `requestId` immediately to avoid MCP client timeouts on large PDFs. When the sync endpoint returns 202, tools return the requestId for LLM polling. Updated `check_pdf_status` to instruct re-polling in 5–10 seconds. |
 | 1.0.2   | 2026-02-10 | **Bug Fix**: Fixed `get_template` to correctly handle API response format and return all template fields (id, displayName, createdAt, updatedAt, type, style, html). |
 | 1.0.1   | 2026-02-10 | **Bug Fix**: Fixed `list_templates` to handle wrapped API responses (`{ templates: [...] }` or `{ data: [...] }`). |
